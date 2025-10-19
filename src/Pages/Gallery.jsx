@@ -1,161 +1,143 @@
-import React, { useEffect, useState } from "react"
-import Slider from "react-slick"
-import "slick-carousel/slick/slick.css"
-import "slick-carousel/slick/slick-theme.css"
-import ButtonSend from "../components/ButtonSend"
-import ButtonRequest from "../components/ButtonRequest"
-import { getStorage, ref, listAll, getDownloadURL } from "firebase/storage"
-import Modal from "@mui/material/Modal"
-import { Box, IconButton } from "@mui/material"
-import CloseIcon from "@mui/icons-material/Close"
-import { useSpring, animated } from "@react-spring/web" // Import the necessary components
+import React, { useEffect, useState } from "react";
+import { Swiper, SwiperSlide } from "swiper/react";
+import "swiper/css";
+import "swiper/css/pagination";
+import { Pagination, Autoplay } from "swiper/modules";
+import ButtonSend from "../components/ButtonSend";
+import ButtonRequest from "../components/ButtonRequest";
+import { getStorage, ref, listAll, getDownloadURL } from "firebase/storage";
+import Modal from "@mui/material/Modal";
+import { IconButton } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
+import { useSpring, animated } from "@react-spring/web";
 
 const Carousel = () => {
-	const [images, setImages] = useState([])
-	const [open, setOpen] = useState(false)
-	const [selectedImage, setSelectedImage] = useState(null)
+  const [images, setImages] = useState([]);
+  const [open, setOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
 
-	const modalFade = useSpring({
-		opacity: open ? 1 : 0,
-		config: { duration: 300 }, // Adjust the duration as needed
-	})
+  const modalFade = useSpring({
+    opacity: open ? 1 : 0,
+    config: { duration: 300 },
+  });
 
-	// Fungsi untuk mengambil daftar gambar dari Firebase Storage
-	const fetchImagesFromFirebase = async () => {
-		try {
-			const storage = getStorage() // Mendapatkan referensi Firebase Storage
-			const storageRef = ref(storage, "GambarAman/") // Menggunakan ref dengan storage
+  // Ambil data gambar dari Firebase
+  const fetchImagesFromFirebase = async () => {
+    try {
+      const storage = getStorage();
+      const storageRef = ref(storage, "GambarAman/");
+      const imagesList = await listAll(storageRef);
 
-			const imagesList = await listAll(storageRef) // Menggunakan listAll untuk mendapatkan daftar gambar
+      const imageURLs = await Promise.all(
+        imagesList.items.map(async (item) => {
+          const url = await getDownloadURL(item);
+          return url;
+        })
+      );
 
-			const imageURLs = await Promise.all(
-				imagesList.items.map(async (item) => {
-					const url = await getDownloadURL(item) // Menggunakan getDownloadURL untuk mendapatkan URL gambar
-					return url
-				}),
-			)
+      setImages(imageURLs);
+    } catch (error) {
+      console.error("Error fetching images from Firebase Storage:", error);
+    }
+  };
 
-			setImages(imageURLs)
-		} catch (error) {
-			console.error("Error fetching images from Firebase Storage:", error)
-		}
-	}
+  useEffect(() => {
+    fetchImagesFromFirebase();
+  }, []);
 
-	useEffect(() => {
-		fetchImagesFromFirebase()
-	}, [])
+  const handleImageClick = (imageUrl) => {
+    setSelectedImage(imageUrl);
+    setOpen(true);
+  };
 
-	const settings = {
-    centerMode: true,
-	centerPadding: "30px",
-	slidesToShow: 3,
-	slidesToScroll: 1,
-	autoplay: true,
-	autoplaySpeed: 2000,
-	dots: true,
-	arrows: false, // 🔥 Tambahkan ini supaya tanda panah hilang di semua mode
-	responsive: [
-		{
-			breakpoint: 768,
-			settings: {
-				arrows: false,
-				centerMode: true,
-				centerPadding: "50px",
-				slidesToShow: 1,
-				dots: false,
-			},
-		},
-		{
-			breakpoint: 480,
-			settings: {
-				arrows: false,
-				centerMode: true,
-				centerPadding: "70px",
-				slidesToShow: 1,
-				dots: false,
-			},
-		},
-	],
+  const handleCloseModal = () => {
+    setOpen(false);
+    setSelectedImage(null);
+  };
+
+  return (
+    <>
+      <div
+        className="text-white opacity-80 text-base font-semibold mb-6 mx-[10%] mt-10 lg:text-center lg:text-3xl lg:mb-10"
+        id="Gallery"
+      >
+        Class Gallery
+      </div>
+
+      {/* Swiper Gallery */}
+      <div className="px-6 lg:px-20">
+        <Swiper
+          modules={[Pagination, Autoplay]}
+          spaceBetween={20}
+          slidesPerView={3}
+          loop={true}
+          pagination={{ clickable: true }}
+          autoplay={{ delay: 2500 }}
+          breakpoints={{
+            1024: { slidesPerView: 3 },
+            768: { slidesPerView: 2 },
+            480: { slidesPerView: 1 },
+          }}
+          className="mySwiper"
+        >
+          {images.map((imageUrl, index) => (
+            <SwiperSlide key={index}>
+              <img
+                src={imageUrl}
+                alt={`Image ${index}`}
+                onClick={() => handleImageClick(imageUrl)}
+                className="rounded-xl w-full aspect-square object-cover cursor-pointer hover:scale-105 transition-transform duration-300"
+              />
+            </SwiperSlide>
+          ))}
+        </Swiper>
+      </div>
+
+      {/* Tombol */}
+      <div className="flex justify-center items-center gap-6 text-base mt-6 lg:mt-10">
+        <ButtonSend />
+        <ButtonRequest />
+      </div>
+
+      {/* Modal */}
+      <Modal
+        open={open}
+        onClose={handleCloseModal}
+        className="flex justify-center items-center"
+      >
+        <animated.div
+          style={{
+            ...modalFade,
+            maxWidth: "90vw",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            position: "relative",
+          }}
+          className="p-2 rounded-lg"
+        >
+          <IconButton
+            edge="end"
+            onClick={handleCloseModal}
+            sx={{
+              position: "absolute",
+              top: "12px",
+              right: "23px",
+              backgroundColor: "white",
+              borderRadius: "50%",
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+          <img
+            src={selectedImage}
+            alt="Selected"
+            className="max-w-full max-h-[90vh] rounded-lg"
+          />
+        </animated.div>
+      </Modal>
+    </>
+  );
 };
 
-
-	const handleImageClick = (imageUrl) => {
-		setSelectedImage(imageUrl)
-		setOpen(true)
-	}
-
-	const handleCloseModal = () => {
-		setOpen(false)
-		setSelectedImage(null)
-	}
-
-	return (
-		<>
-			<div className="text-white opacity-60 text-base font-semibold mb-4 mx-[10%] mt-10 lg:text-center lg:text-3xl lg:mb-8" id="Gallery">
-				Class Gallery
-			</div>
-			<div id="Carousel">
-				<Slider {...settings}>
-					{images.map((imageUrl, index) => (
-						<img
-							key={index}
-							src={imageUrl}
-							alt={`Image ${index}`}
-							onClick={() => handleImageClick(imageUrl)}
-							style={{ cursor: "pointer" }}
-						/>
-					))}
-				</Slider>
-			</div>
-
-			<div className="flex justify-center items-center gap-6 text-base mt-5 lg:mt-8">
-				<ButtonSend />
-				<ButtonRequest />
-			</div>
-
-			<Modal
-				open={open}
-				onClose={handleCloseModal}
-				aria-labelledby="image-modal"
-				aria-describedby="image-modal-description"
-				className="flex justify-center items-center">
-				<animated.div
-					style={{
-						...modalFade,
-						maxWidth: "90vw",
-						maxHeight: "auto",
-						display: "flex",
-						flexDirection: "column",
-						justifyContent: "center",
-						alignItems: "center",
-						position: "relative",
-					}}
-					className="p-2 rounded-lg">
-					<IconButton
-						edge="end"
-						color="inherit"
-						onClick={handleCloseModal}
-						aria-label="close"
-						sx={{
-							position: "absolute",
-							top: "12px",
-							right: "23px",
-							backgroundColor: "white",
-							borderRadius: "50%",
-						}}>
-						<CloseIcon />
-					</IconButton>
-					<div className="w-full">
-						<img
-							src={selectedImage}
-							alt="Selected Image"
-							style={{ maxWidth: "100%", maxHeight: "100vh" }}
-						/>
-					</div>
-				</animated.div>
-			</Modal>
-		</>
-	)
-}
-
-export default Carousel
+export default Carousel;
