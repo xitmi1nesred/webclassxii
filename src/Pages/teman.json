@@ -1,0 +1,23 @@
+[
+  {
+    "name": "Sultan",
+    "role": "Ketua Kelas",
+    "photo": "https://i.ibb.co.com/gM7WTThb/ilham2.jpg",
+    "bio": "Suka teknologi, aktif di kegiatan sekolah, dan selalu semangat belajar hal baru.",
+    "hobbies": ["Ngoding", "Main futsal", "Nonton film"]
+  },
+  {
+    "name": "Zaini",
+    "role": "Wakil Ketua",
+    "photo": "https://i.ibb.co.com/gM7WTThb/ilham2.jpg",
+    "bio": "Orangnya kalem tapi kreatif. Sering bantu teman kalau ada tugas sulit.",
+    "hobbies": ["Desain grafis", "Ngopi", "Main game"]
+  },
+  {
+    "name": "Fajri",
+    "role": "Anggota",
+    "photo": "https://i.ibb.co.com/gM7WTThb/ilham2.jpg",
+    "bio": "Punya selera humor tinggi dan suka bikin suasana kelas seru.",
+    "hobbies": ["Basket", "Editing video", "Travelling"]
+  }
+]
